@@ -26,7 +26,7 @@ static string GetTxtFile()
 {
     do
     {
-        Console.WriteLine("Введите пусть к файлу *.txt");
+        Console.WriteLine("Введите путь к файлу *.txt");
         var file = Console.ReadLine();
 
         if (File.Exists(file) && Path.GetExtension(file) == ".txt")
