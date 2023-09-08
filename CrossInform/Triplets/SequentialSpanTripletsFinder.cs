@@ -23,7 +23,7 @@ internal sealed class SequentialSpanTripletsFinder : TripletsFinder
 
         for (var index = StartIndex; index < EndIndex; index++)
         {
-            var triplet = span.Slice(index, 3);
+            var triplet = CreateTriplet(span, index);
 
             if (AreLetters(triplet))
             {
