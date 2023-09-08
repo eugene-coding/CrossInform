@@ -137,8 +137,7 @@ internal abstract class TripletsFinder
     /// <returns>Созданный триплет.</returns>
     protected static ReadOnlySpan<char> CreateTriplet(ReadOnlySpan<char> span, int start)
     {
-        var triplet = span.Slice(start, TripletLength);
-        return triplet;
+        return span.Slice(start, TripletLength);
     }
 
     /// <summary>
