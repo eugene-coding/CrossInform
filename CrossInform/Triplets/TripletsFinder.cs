@@ -8,21 +8,6 @@ namespace CrossInform.Triplets;
 internal abstract class TripletsFinder
 {
     /// <summary>
-    /// Размер буфера.
-    /// </summary>
-    /// <remarks>
-    /// 81920 - стандартный размер буфера, используемый в <see cref="Stream.CopyTo"/>,
-    /// и он находится ниже порога кучи больших объектов (85 кб).
-    /// </remarks>
-    protected const int BufferSize = 81_920;
-
-    /// <summary>
-    /// Значение, на которое нужно сместить буфер 
-    /// для хранения двух оставшихся с предыдущей выгрузки символов.
-    /// </summary>
-    protected const int Offset = 2;
-
-    /// <summary>
     /// Индекс, с которого нужно перебирать <see cref="Buffer"/>.
     /// </summary>
     protected const int StartIndex = 0;
@@ -32,7 +17,30 @@ internal abstract class TripletsFinder
     /// </summary>
     protected const int EndIndex = BufferSize - Offset;
 
-    private const int TripletSize = 3;
+    /// <summary>
+    /// Размер буфера.
+    /// </summary>
+    /// <remarks>
+    /// 81920 - стандартный размер буфера, используемый в <see cref="Stream.CopyTo"/>,
+    /// и он находится ниже порога кучи больших объектов (85 кб).
+    /// </remarks>
+    private const int BufferSize = 81_920;
+    
+    /// <summary>
+    /// Значение, на которое нужно сместить буфер 
+    /// для хранения двух оставшихся с предыдущей выгрузки символов.
+    /// </summary>
+    private const int Offset = 2;
+    
+    /// <summary>
+    /// Длина триплета.
+    /// </summary>
+    private const int TripletLength = 3;
+
+    /// <summary>
+    /// Путь к текстовому файлу, в котором нужно найти триплеты.
+    /// </summary>
+    private readonly string _file;
 
     /// <summary>
     /// Создаёт экземпляр класса.
@@ -40,7 +48,7 @@ internal abstract class TripletsFinder
     /// <param name="file">Текстовый файл, в котором нужно найти триплеты.</param>
     public TripletsFinder(string file)
     {
-        File = file;
+        _file = file;
     }
 
     /// <summary>
@@ -49,22 +57,17 @@ internal abstract class TripletsFinder
     protected char[] Buffer { get; } = new char[BufferSize];
 
     /// <summary>
-    /// Словарь с триплетами, где ключ - сам триплет, а значение - количество триплетов в <see cref="File"/>.
+    /// Словарь с триплетами, где ключ - сам триплет, а значение - количество триплетов в <see cref="_file"/>.
     /// </summary>
     protected abstract IReadOnlyDictionary<string, int> Triplets { get; }
-
+    
     /// <summary>
-    /// Путь к текстовому файлу, в котором нужно найти триплеты.
-    /// </summary>
-    protected string File { get; }
-
-    /// <summary>
-    /// Находит триплеты в <see cref="File"/> и возвращает <see cref="Triplets"/>,
+    /// Находит триплеты в <see cref="_file"/> и возвращает <see cref="Triplets"/>,
     /// </summary>
     /// <returns><see cref="Triplets"/>.</returns>
     public IReadOnlyDictionary<string, int> FindTriplets()
     {
-        using var reader = new StreamReader(File, Encoding.UTF8);
+        using var reader = new StreamReader(_file, Encoding.UTF8);
 
         while (!reader.EndOfStream)
         {
@@ -127,12 +130,15 @@ internal abstract class TripletsFinder
     }
 
     /// <summary>
-    /// Считывает данные в <see cref="Buffer"/>.
+    /// Создаёт триплет в нижнем регистре.
     /// </summary>
-    /// <param name="reader">Поток, данные из которого необходимо считать.</param>
-    protected void ReadBlockIntoBuffer(StreamReader reader)
+    /// <param name="span"><see cref="ReadOnlySpan{T}"/>, на основе которого нужно создать триплет.</param>
+    /// <param name="start">Начальная индекс, от которого нужно создать триплет.</param>
+    /// <returns>Созданный триплет.</returns>
+    protected static ReadOnlySpan<char> CreateTriplet(ReadOnlySpan<char> span, int start)
     {
-        reader.ReadBlock(Buffer, Offset, BufferSize - Offset);
+        var triplet = span.Slice(start, TripletLength);
+        return triplet;
     }
 
     /// <summary>
@@ -142,19 +148,21 @@ internal abstract class TripletsFinder
     /// <returns>Созданный триплет.</returns>
     protected string CreateTriplet(int start)
     {
-        return new string(Buffer, start, TripletSize).ToLower();
+        return new string(Buffer, start, TripletLength).ToLower();
     }
 
     /// <summary>
-    /// Создаёт триплет в нижнем регистре.
+    /// Обрабатывает <see cref="Buffer"/>, чтобы найти триплеты и их количество.
     /// </summary>
-    /// <param name="span"><see cref="ReadOnlySpan{T}"/>, на основе которого нужно создать триплет.</param>
-    /// <param name="start">Начальная индекс, от которого нужно создать триплет.</param>
-    /// <returns>Созданный триплет.</returns>
-    protected static ReadOnlySpan<char> CreateTriplet(ReadOnlySpan<char> span, int start)
+    protected abstract void Process();
+
+    /// <summary>
+    /// Считывает данные в <see cref="Buffer"/>.
+    /// </summary>
+    /// <param name="reader">Поток, данные из которого необходимо считать.</param>
+    private void ReadBlockIntoBuffer(StreamReader reader)
     {
-        var triplet = span.Slice(start, TripletSize);
-        return triplet;
+        reader.ReadBlock(Buffer, Offset, BufferSize - Offset);
     }
 
     /// <summary>
@@ -165,14 +173,9 @@ internal abstract class TripletsFinder
     /// Первые две ячейки <see cref="Buffer>"/> специально зарезервированы 
     /// для оставшихся с предыдущего блока букв.
     /// </remarks>
-    protected void AddRemainingLettersToStart()
+    private void AddRemainingLettersToStart()
     {
         Buffer[0] = Buffer[^1];
         Buffer[1] = Buffer[^2];
     }
-
-    /// <summary>
-    /// Обрабатывает <see cref="Buffer"/>, чтобы найти триплеты и их количество.
-    /// </summary>
-    protected abstract void Process();
 }
