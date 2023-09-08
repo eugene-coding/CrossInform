@@ -21,7 +21,7 @@ internal sealed class SequentialSpanTripletsFinder : TripletsFinder
         var text = new string(Buffer).ToLowerInvariant();
         var span = text.AsSpan();
 
-        for (var index = Offset; index < Buffer.Length - Offset; index++)
+        for (var index = StartIndex; index < EndIndex; index++)
         {
             var triplet = span.Slice(index, 3);
 

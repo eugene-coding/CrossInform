@@ -20,7 +20,7 @@ internal sealed class ParallelTripletsFinder : TripletsFinder
     /// <inheritdoc/>
     protected override void Process()
     {
-        Parallel.For(Offset, Buffer.Length - Offset, index =>
+        Parallel.For(StartIndex, EndIndex, index =>
         {
             var triplet = CreateTriplet(index);
 

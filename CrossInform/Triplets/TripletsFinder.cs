@@ -22,6 +22,16 @@ internal abstract class TripletsFinder
     /// </summary>
     protected const int Offset = 2;
 
+    /// <summary>
+    /// Индекс, с которого нужно перебирать <see cref="Buffer"/>.
+    /// </summary>
+    protected const int StartIndex = 0;
+
+    /// <summary>
+    /// Индекс, до которого не включительно нужно перебирать <see cref="Buffer"/>. 
+    /// </summary>
+    protected const int EndIndex = BufferSize - Offset;
+
     private const int TripletSize = 3;
 
     /// <summary>

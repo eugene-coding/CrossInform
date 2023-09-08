@@ -22,7 +22,7 @@ internal sealed class ParallelSpanTripletsFinder : TripletsFinder
     {
         var text = new string(Buffer).ToLowerInvariant();
 
-        Parallel.For(Offset, Buffer.Length - Offset, index =>
+        Parallel.For(StartIndex, EndIndex, index =>
         {
             var triplet = CreateTriplet(text.AsSpan(), index);
 

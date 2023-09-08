@@ -18,7 +18,7 @@ internal sealed class SequentialTripletsFinder : TripletsFinder
     /// <inheritdoc/>
     protected override void Process()
     {
-        for (var index = Offset; index < Buffer.Length - Offset; index++)
+        for (var index = StartIndex; index < EndIndex; index++)
         {
             var triplet = CreateTriplet(index);
 
